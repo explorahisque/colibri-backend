@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Usuario - Co-Libri Learning</title>
+    <link href="/css/tailwind.css" rel="stylesheet"> <!-- Archivo CSS local generado con Tailwind CLI -->
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-md w-96">
+        <h1 class="text-2xl font-bold mb-6 text-center">Registro de Usuario</h1>
+        
+        <form id="registerForm" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Nombre</label>
+                <input type="text" id="nombre" required 
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
+                    placeholder="Nombre completo">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Correo electrónico</label>
+                <input type="email" id="email" required 
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
+                    placeholder="ejemplo@dominio.com">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Contraseña</label>
+                <input type="password" id="password" required 
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
+                    placeholder="••••••••">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Rol</label>
+                <select id="rol" required 
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                    <option value="">Seleccionar rol...</option>
+                    <option value="administrador">Administrador</option>
+                    <option value="estudiante">Estudiante</option>
+                </select>
+            </div>
+            
+            <div id="error" class="text-red-500 text-sm hidden"></div>
+            
+            <button type="submit" 
+                class="w-full bg-green-600 text-white rounded-md py-2 hover:bg-green-700 transition-colors">
+                Registrar
+            </button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const nombre = document.getElementById('nombre').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const rol = document.getElementById('rol').value;
+            const errorDiv = document.getElementById('error');
+            
+            try {
+                // Verificar si existen usuarios en la base de datos mediante un endpoint público
+                const userCheckResponse = await fetch('http://localhost:3000/api/usuarios/existen');
+                const userCheckData = await userCheckResponse.json();
+
+                if (userCheckResponse.ok && !userCheckData.existenUsuarios) {
+                    // Si no hay usuarios, permitir la creación del primer usuario sin autenticación
+                    const response = await fetch('http://localhost:3000/api/usuarios/primer-usuario', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ nombre, email, password, rol })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        alert('Usuario registrado exitosamente');
+                        window.location.href = '/login.html'; // Redirigir al login
+                    } else {
+                        errorDiv.textContent = data.error || 'Error al registrar el usuario';
+                        errorDiv.classList.remove('hidden');
+                    }
+                } else {
+                    errorDiv.textContent = 'No tiene permisos para registrar usuarios';
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errorDiv.textContent = 'Error al conectar con el servidor';
+                errorDiv.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
